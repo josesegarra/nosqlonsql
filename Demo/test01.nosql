@@ -1,0 +1,64 @@
+﻿
+-- MSG Create some SQL data 
+
+drop table if exists COUNTRY
+CREATE TABLE COUNTRY(
+	ID			[nvarchar](3)  NOT NULL,
+	CURRENCY	[nvarchar](15) NULL
+) ON [PRIMARY]
+
+INSERT INTO COUNTRY(id,currency) select 'US','Dollar'
+INSERT INTO COUNTRY(id,currency) select 'UK','Pound'
+INSERT INTO COUNTRY(id,currency) select 'FR','Euro'
+
+
+-- MSG Create some NOSQL data
+
+nosql create people override                                          
+nosql insert {
+		name: "Homer", age: 34, color:"green",  
+		country: "US",
+		lastname:"Simpson" ,
+		weight:90,
+		likes:['football','doughnuts'], 
+		children: [ 
+			{name: "Bart",weight:38,age:10},
+			{name:"Lisa",age:8,likes:['music']}
+		]}   
+into people
+
+nosql insert { name: "Oliver Richard", age: 9, country: "UK", lastname:"Twist" } into people
+nosql insert { name: "Louis", age: 38, country: "FR", lastname:"Mallou" } into people
+
+
+-- MSG And run some queries
+
+nosql select 'A' as Q1,$name,$lastname from people
+
+-- Notice that we can use TSQL function s
+nosql select 'B' as Q1,? as id,$name as fullfirstname,len(replace($name,' ','')) as lettersInName,$lastname,$color,$spouse.name from people
+
+-- And access array elements by INDEX
+nosql select 'C' as Q1,? as id,$name,$lastname,#age,$spouse.name,$children[0].name as kid0,$children[1].name as kid1,$children[2].name as kid2 from people where $name='Homer' 
+
+nosql select 'D' as Q1,? as id,$name,$lastname,#age,$spouse.name from people where $name='Homer' 
+
+-- Also we can do JOINS with array elements
+nosql select 'E' as Q1,? as id,$name,$lastname,#age,$spouse.name,$children[0].name as kid0,$children[1].name as kid1,$children[2].name as kid2 from people where #likes:count>0 expand likes with (?? as idx,$ as likes) 
+
+nosql select 'F' as Q1,? as id,$name,$lastname,#age from people expand likes with (?? as idx,$ as item) expand children with ($name as kidname,$likes[0] as kidLikes) 
+
+nosql select 'G' as Q1,? as id,$name,$lastname,#age from people where #likes:count>0 and #children:count>0 expand likes with (?? as idx,$ as item) expand children with ($name as kidname,$likes[0] as kidLikes) 
+
+
+nosql select 'H' as Q1,? as id,$name,$lastname,#age from people where #likes:count>0 and #children:count>0 expand likes with (?? as idx,$ as item) where $='football' expand children with ($name as kidname,$likes[0] as kidLikes) where $name='Bart'
+
+
+-- And MIX NOSQL and SQL statements
+select 'I' as Q1,tNoSql.person,tSql.currency from (nosql select $lastname+', '+$name as person,$country from people ) as tNoSql inner join country as tSql on tNoSql.country=tSql.id
+
+nosql select 'J' as Q1,$name,$lastname,{select count(*) from country} as numOfCountries from people
+
+
+-- THIS IS NOT IMPLENTED YET nosql select $name,$lastname,{select currency from country where id=$country} as cinco from people
+

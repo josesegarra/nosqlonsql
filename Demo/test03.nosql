@@ -1,0 +1,17 @@
+﻿
+
+
+
+-- MSG We can see an object values
+
+nosql show compact in people where $Lastname='Simpson'			-- This is the compact simple view -> not tracing linked objects
+nosql show nested in people where $Lastname='Simpson'			-- This is the nested view -> tracing linked objects
+
+
+
+-- We can do some more changes
+nosql update in people  where $name='Homer' add to likes 'Baseball'       
+nosql update in people  where $name='Bart' set color is 'Orange',age is 13,lastName is 'Simpson'
+
+
+nosql show nested history in people where $Lastname='Simpson'		-- This is the nested view plus HISTORY of changes

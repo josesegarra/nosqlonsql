@@ -1,0 +1,35 @@
+﻿
+-- MSG Updates work in OBJECTS is returned by the expression
+
+-- This updates the AGE of the first children of HOMER
+
+nosql update in people ^children[0] where $Name='Homer' set age is 11
+
+-- This updates all objects in SOMEPEOPLE, setting color is red, and INCREASING age (if an object has no previous age then nothing happens)
+
+nosql update in people  set color is 'red',age is #(#age+1)       
+
+-- This one sets color for all the children of HOMER
+
+nosql update in people where $name='Homer' expand children with (^) set color is 'black'       
+
+
+-- We can use the UPDATE to INSERT new data. Notice that Marge has the same LASTNAME and CHILDREN as Homer, also her AGE & SPOUSE are function of HOMER's
+nosql update in people where $name='Homer' set spouse is {name:"Marge",lastname:$lastname,children:^children,age:#(#age-2),spouse:^}       
+
+
+-- Let's UPDATE color and LIKES for Homer's wife
+nosql update in people ^spouse where $name='Homer' set color is 'pink',likes is ["bowling","cooking"]   
+
+-- We can use complex SELECT to select the OBJECT to update. This one updates the color for HOMER's oldest child
+nosql update person in (select top 1 none from people where $name='Homer' expand children with (^ as person,#age as a) order by a desc) set color is 'purple'       
+
+-- We can elements to an array
+nosql update in people  where $name='Homer' add to likes 'Beer'       
+
+-- Also we can add objects
+nosql update in people where $name='Homer' add to children {name:"Maggie",lastname:$lastname,age:1}       
+
+-- Displaying the results
+nosql select 'A10',?,$name,$lastname,#age,$color,$spouse.name,$children[0].name as kid0,$children[1].name as kid1,$children[2].name as kid2  from people expand likes with (?? as idx,$ as likes) 
+        
